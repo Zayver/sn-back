@@ -1,0 +1,355 @@
+databaseChangeLog:
+  - changeSet:
+      id: initial-migration
+      author: Zayver
+      changes:
+        - sql:
+            sql: 'CREATE EXTENSION IF NOT EXISTS "uuid-ossp";' #UUID FOR POSTGRES IF NOT EXISTS
+        - createTable:
+            tableName: users
+            columns:
+              - column:
+                  name: uuid
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                  defaultValueComputed: uuid_generate_v4()
+              - column:
+                  name: username
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: password
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: notes
+            columns:
+              - column:
+                  name: uuid
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                  defaultValueComputed: uuid_generate_v4()
+              - column:
+                  name: title
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: note
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: DATETIME
+                  constraints:
+                    nullable: false
+                  defaultValueComputed: CURRENT_TIMESTAMP
+              - column:
+                  name: archived
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+                    defaultValue: false
+              - column:
+                  name: user_uuid
+                  type: UUID
+                  constraints:
+                    nullable: false
+
+        - createTable:
+            tableName: categories
+            columns:
+              - column:
+                  name: uuid
+                  type: UUID
+                  constraints:
+                    primaryKey: true
+                  defaultValueComputed: uuid_generate_v4()
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: user_uuid
+                  type: UUID
+                  constraints:
+                    nullable: false
+        - createTable:
+            tableName: category_notes
+            columns:
+                - column:
+                    name: category_uuid
+                    type: UUID
+                    constraints:
+                      nullable: false
+                - column:
+                    name: note_uuid
+                    type: UUID
+                    constraints:
+                      nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: notes
+            baseColumnNames: user_uuid
+            referencedTableName: users
+            referencedColumnNames: uuid
+            constraintName: fk_notes_user
+
+        - addForeignKeyConstraint:
+            baseTableName: categories
+            baseColumnNames: user_uuid
+            referencedTableName: users
+            referencedColumnNames: uuid
+            constraintName: fk_categories_user
+
+        # Many to many
+        - addPrimaryKey:
+            tableName: category_notes
+            columnNames: category_uuid,note_uuid
+            constraintName: pk_category_notes
+        - addForeignKeyConstraint:
+            baseTableName: category_notes
+            baseColumnNames: category_uuid
+            referencedTableName: categories
+            referencedColumnNames: uuid
+            constraintName: fk_category_notes_category
+            onDelete: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: category_notes
+            baseColumnNames: note_uuid
+            referencedTableName: notes
+            referencedColumnNames: uuid
+            constraintName: fk_category_notes_note
+            onDelete: CASCADE
+
+  - changeSet:
+      id: insert-example-data
+      author: Zayver
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: uuid
+                  value: "b2b0ecf7-59a1-43c7-84c1-4fc830fbbdaa"
+              - column:
+                  name: username
+                  value: demo
+              - column:
+                  name: password
+                  value: "$2a$10$8Dd7U9RXwVwPvlc3oMMBeuAIR.zFQoQiQIk.sEkjQ9Qd.h2vZxVp6"
+
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: empty
+              - column:
+                  name: password
+                  value: "$2a$10$en1M0gZ/lewJmobSUFQGuu6bUtEzIcp/eRETxiBbxRE9y3qMLSYWy"
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: uuid
+                  value: "c84274f2-f931-4c94-a526-86bd9f795999"
+              - column:
+                  name: name
+                  value: Groceries
+              - column:
+                  name: user_uuid
+                  value: "b2b0ecf7-59a1-43c7-84c1-4fc830fbbdaa"
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: uuid
+                  value: "6471cad5-f7fe-4bc7-9cff-98b7d6812002"
+              - column:
+                  name: name
+                  value: Programming
+              - column:
+                  name: user_uuid
+                  value: "b2b0ecf7-59a1-43c7-84c1-4fc830fbbdaa"
+
+        - insert:
+            tableName: categories
+            columns:
+              - column:
+                  name: uuid
+                  value: "d241a15f-1c2e-4105-b296-28697da0a257"
+              - column:
+                  name: name
+                  value: TODO
+              - column:
+                  name: user_uuid
+                  value: "b2b0ecf7-59a1-43c7-84c1-4fc830fbbdaa"
+
+        - insert:
+            tableName: notes
+            columns:
+              - column:
+                  name: uuid
+                  value: "6d1696cd-650f-485e-a362-50396311c293"
+              - column:
+                  name: title
+                  value: "Shopping list for January"
+              - column:
+                  name: note
+                  value: |
+                    <h1 id="shopping-list">Shopping list</h1>
+                    <ul>
+                    <li>Milk</li>
+                    <li>Eggs</li>
+                    <li>Bacon</li>
+                    <li>Potatoes</li>
+                    <li>Tomatoes</li>
+                    <li>Rice<h3 id="extra">Extra</h3>
+                    </li>
+                    <li>Test the new limited edition DORITOSSSS</li>
+                    </ul>
+
+              - column:
+                  name: archived
+                  value: "false"
+              - column:
+                  name: user_uuid
+                  value: "b2b0ecf7-59a1-43c7-84c1-4fc830fbbdaa"
+
+        - insert:
+            tableName: notes
+            columns:
+              - column:
+                  name: uuid
+                  value: "969e284f-d57c-4abc-9729-8ef9431254f6"
+              - column:
+                  name: title
+                  value: "January TODO"
+              - column:
+                  name: note
+                  value: |
+                    <h1 id="things-i-wanna-do-in-2025">Things I wanna do in 2025</h1>
+                    <ul>
+                    <li>Read more</li>
+                    <li>Do skating</li>
+                    <li>Buy a new PC</li>
+                    <li>Get a Job</li>
+                    </ul>
+
+              - column:
+                  name: archived
+                  value: "false"
+              - column:
+                  name: user_uuid
+                  value: "b2b0ecf7-59a1-43c7-84c1-4fc830fbbdaa"
+
+        - insert:
+            tableName: notes
+            columns:
+              - column:
+                  name: uuid
+                  value: "65dbe656-51fd-4bd1-9b90-3706258a562f"
+              - column:
+                  name: title
+                  value: "December TODO"
+              - column:
+                  name: note
+                  value: |
+                    <h1 id="things-i-wanna-do-in-2024">Things I wanna do in 2024</h1>
+                    <ul>
+                    <li>Buy a gift for my mother</li>
+                    <li>Bake a cake</li>
+                    <li>Learn guitar</li>
+                    </ul>
+
+              - column:
+                  name: archived
+                  value: "true"
+              - column:
+                  name: user_uuid
+                  value: "b2b0ecf7-59a1-43c7-84c1-4fc830fbbdaa"
+
+        - insert:
+            tableName: notes
+            columns:
+              - column:
+                  name: uuid
+                  value: "472a60a1-0595-45bf-8fb1-7fa76cd27556"
+              - column:
+                  name: title
+                  value: "React notes"
+              - column:
+                  name: note
+                  value: |
+                    <h1 id="-react-course-"><strong>React course</strong></h1>
+                    <p>React is a library  for web and native user interfaces</p>
+                    <h3 id="example-for-a-simple-react-component">Example for a simple react component</h3>
+                    <pre><code class="lang-typescrypt"><span class="hljs-keyword">import</span> { useState } <span class="hljs-keyword">from</span> <span class="hljs-string">'react'</span>;
+                    
+                    <span class="hljs-comment">//Simple example</span>
+                    <span class="hljs-keyword">export</span> <span class="hljs-keyword">default</span> <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">SearchBar</span>(<span class="hljs-params"></span>) </span>{
+                    <span class="hljs-keyword">const</span> [search, setSearch] = useState(<span class="hljs-string">''</span>)
+                    
+                    <span class="hljs-keyword">return</span> (
+                    <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">type</span>=<span class="hljs-string">"test"</span> <span class="hljs-attr">value</span>=<span class="hljs-string">{search}</span> <span class="hljs-attr">onChange</span>=<span class="hljs-string">{newText</span> =&gt;</span> setSearch(newText)}&gt;
+                    )
+                    }</span>
+                    </code></pre>
+
+              - column:
+                  name: archived
+                  value: "false"
+              - column:
+                  name: user_uuid
+                  value: "b2b0ecf7-59a1-43c7-84c1-4fc830fbbdaa"
+
+        - insert:
+            tableName: category_notes
+            columns:
+              - column:
+                  name: category_uuid
+                  value: "c84274f2-f931-4c94-a526-86bd9f795999"
+              - column:
+                  name: note_uuid
+                  value: "6d1696cd-650f-485e-a362-50396311c293"
+
+        - insert:
+            tableName: category_notes
+            columns:
+              - column:
+                  name: category_uuid
+                  value: "d241a15f-1c2e-4105-b296-28697da0a257"
+              - column:
+                  name: note_uuid
+                  value: "969e284f-d57c-4abc-9729-8ef9431254f6"
+
+        - insert:
+            tableName: category_notes
+            columns:
+              - column:
+                  name: category_uuid
+                  value: "d241a15f-1c2e-4105-b296-28697da0a257"
+              - column:
+                  name: note_uuid
+                  value: "65dbe656-51fd-4bd1-9b90-3706258a562f"
+
+        - insert:
+            tableName: category_notes
+            columns:
+              - column:
+                  name: category_uuid
+                  value: "6471cad5-f7fe-4bc7-9cff-98b7d6812002"
+              - column:
+                  name: note_uuid
+                  value: "472a60a1-0595-45bf-8fb1-7fa76cd27556"

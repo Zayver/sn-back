@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: simplenotes
+
+  datasource:
+    url: "jdbc:postgresql://${DB_HOST}/${DB_NAME}?user=${DB_USER}&password=${DB_PASS}"
+
+  liquibase:
+    url: "jdbc:postgresql://${DB_HOST}/${DB_NAME}?user=${DB_USER}&password=${DB_PASS}"
+    change-log: "classpath:db/changelog/db.changelog-master.yaml"
+
+jwt:
+  secret_key: "${JWT_SECRET_KEY}"
